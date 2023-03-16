@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block title %}
+    <h1>Welcome to my advanced sign-up and log in with Flask and MySQL</h1>
+{% endblock %}
+
 {% block content %}
     {% for message in get_flashed_messages() %}
         <div class="alert alert-info alert-dismissible fade show" role="alert">
@@ -7,10 +11,18 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {% endfor %}
-    <div class="d-grid gap-2 col-6 mx-auto">
-        <a class="btn btn-primary" href="{{ url_for('sign_up')}}" role="button">Sign up</a>
-        <a class="btn btn-light" href="{{ url_for('log_in')}}" role="button">Log in</a>
+
+
+    {% if not session['loggedin'] %}
+    <div class="d-grid gap-2 col-6 mx-auto" style="padding-top: 80px">
+        <a class="btn btn-primary" href="{{ url_for('sign_up') }}" role="button">Sign up</a>
+        <a class="btn btn-light" href="{{ url_for('log_in') }}" role="button">Log in</a>
     </div>
+    {% endif %}
+
+    {% if session['loggedin'] %}
+    <h2>Welcome back {{ session['first_name'] }}, you are now logged in.</h2>
+    {% endif %}
 
 
 {% endblock %}

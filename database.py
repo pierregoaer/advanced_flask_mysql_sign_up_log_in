@@ -4,10 +4,10 @@ from mysql.connector import Error
 
 # Set up MySQL connection
 mydb = mysql.connector.connect(
-    host="localhost",
-    user="root",
+    host=os.environ.get('MYSQLHOST'),
+    user=os.environ.get('MYSQLUSER'),
     password=os.environ.get('MYSQLPASSWORD'),
-    database="login_signup_db"
+    database=os.environ.get('MYSQLDATABASE')
 )
 cursor = mydb.cursor(buffered=True, dictionary=True)
 

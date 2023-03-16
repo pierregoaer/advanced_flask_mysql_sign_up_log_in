@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import mydb, cursor, create_user_query, search_user_with_email_query
@@ -23,11 +23,11 @@ def sign_up():
         email = sign_up_form.email.data
         # check if user exists
         cursor.execute(search_user_with_email_query, {'email': email})
-        check_for_user = cursor.fetchall()
+        check_for_user = cursor.fetchone()
         print('User trying to sign up ...')
         print('Checked for users:', check_for_user)
         if check_for_user:
-            flash(f"This email already exists, please log in.")
+            flash(f"This email already exists, please log in.", category='warning')
             return redirect(url_for('log_in'))
 
         # create new user
@@ -50,7 +50,7 @@ def sign_up():
         mydb.commit()
 
         # flash successful message and redirect
-        flash(f"Hello {first_name}, your account was created successfully, please log in.")
+        flash(f"Hello {first_name}, your account was created successfully, please log in.", category='info')
         return redirect(url_for('log_in'))
     else:
         return render_template('sign_up.html', form=sign_up_form)
@@ -63,22 +63,36 @@ def log_in():
         email = log_in_form.email.data
         # check if user exists
         cursor.execute(search_user_with_email_query, {'email': email})
-        check_for_user = cursor.fetchall()
+        user = cursor.fetchone()
         print('User trying to log in ...')
-        print('Checked for users:', check_for_user)
-        if not check_for_user:
-            flash(f"This email doesn't exist, please sign up.")
+        print('Checked for users:', user)
+        if not user:
+            flash(f"This email doesn't exist, please sign up.", category='warning')
             return redirect(url_for('sign_up'))
-        user = check_for_user[0]
         if not check_password_hash(pwhash=user['password'], password=log_in_form.password.data):
-            print("Woops, looks like your entered the wrong password.")
-            flash(f"Looks like you entered the wrong password, please try again.")
+            flash(f"Looks like you entered the wrong password, please try again.", category='error')
             return redirect(url_for('log_in'))
-
-        print(f"Welcome back {user['first_name']}")
-        flash(f"Welcome back {user['first_name']}, you are now logged in.")
+        session['loggedin'] = True
+        session['id'] = user['id']
+        session['first_name'] = user['first_name']
+        session['last_name'] = user['last_name']
+        flash(f"Welcome back {user['first_name']}, you are now logged in.", category='info')
         return redirect(url_for('index'))
     return render_template('log_in.html', form=log_in_form)
+
+
+@app.route('/log-out')
+def log_out():
+    session.pop('loggedin', None)
+    session.pop('id', None)
+    session.pop('first_name', None)
+    session.pop('last_name', None)
+    return redirect(url_for('index'))
+
+
+@app.route('/settings')
+def settings():
+    return "Settings panel"
 
 
 @app.route('/reset-password')
@@ -89,10 +103,6 @@ def reset_password():
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)
 
-# TODO: enable version control et push to github
-# TODO: switch to a hosted database
-# TODO: customize alerts (change colour based on type of alert)
+# TODO: add URL parameter to speed up entry: if wrong password, populate email field with last email entered
 # TODO: add email link verification
 # TODO: add reset password feature
-# TODO: after successful log in, connect user and redirect to home page with specific message
-# TODO: add URL parameter to speed up entry: if wrong password, populate email field with last email entered

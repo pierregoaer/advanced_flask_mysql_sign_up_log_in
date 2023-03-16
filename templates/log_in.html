@@ -5,8 +5,20 @@
 {% endblock %}
 
 {% block content %}
-    {% for message in get_flashed_messages() %}
+    {% for message in get_flashed_messages(category_filter=["error"]) %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <p> {{ message }}</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {% for message in get_flashed_messages(category_filter=["info"]) %}
         <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <p> {{ message }}</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {% for message in get_flashed_messages(category_filter=["warning"]) %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
             <p> {{ message }}</p>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -29,7 +41,7 @@
                 Password must be at least 8 characters long.
             </div>
         </div>
-        <a href="{{ url_for('reset_password')}}">Forgot your password? </a>
+        <a href="{{ url_for('reset_password') }}">Forgot your password? </a>
 
         {{ form.log_in }}
         <p>Don't have an account yet? <a href="{{ url_for('sign_up') }}">Sign up</a>.</p>

@@ -1,0 +1,27 @@
+.site-wrapper {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: #333333;
+    text-align: center;
+    padding: 30px 0 10px 0;
+}
+
+.navbar-nav {
+    background-color: #e3f2fd;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 5px 50px;
+}
+
+.nav-controls {
+    display: flex;
+    gap: 15px;
+}
+
+.modal-btn {
+    width: fit-content;
+    margin: 20px auto;
+}

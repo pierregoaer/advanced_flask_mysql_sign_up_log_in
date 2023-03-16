@@ -4,7 +4,7 @@ form {
     display: flex;
     flex-direction: column;
     row-gap: 20px;
-    padding: 0 10px;
+    padding: 40px 10px;
 }
 
 form .form-field {
@@ -43,6 +43,7 @@ form .form-field textarea:focus,
 form .form-field select:focus {
     outline: none;
     border-color: #4b9694;
+    box-shadow: none;
 }
 
 form .form-field label {
