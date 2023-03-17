@@ -50,3 +50,25 @@ class LogInForm(FlaskForm):
         validators=[DataRequired(message="Your password is required")]
     )
     log_in = SubmitField("Log In")
+
+
+class UpdatePassword(FlaskForm):
+    current_password = PasswordField(
+        name='current_password',
+        label='Password',
+        render_kw={"placeholder": "current password"},
+        validators=[DataRequired(message="Your password is at least 8 characters long."), Length(min=8)]
+    )
+    new_password = PasswordField(
+        name='new_password',
+        label='New password',
+        render_kw={"placeholder": "new password"},
+        validators=[DataRequired(message="Password must be at least 8 characters long."), Length(min=8)]
+    )
+    confirm_new_password = PasswordField(
+        name='confirm_new_password',
+        label='Confirm new password',
+        render_kw={"placeholder": "confirm new password"},
+        validators=[DataRequired(), EqualTo('new_password', message='Passwords must match.')]
+    )
+    update_password = SubmitField("Update password")

@@ -2,69 +2,90 @@
 
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/form_style.css') }}"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}"/>
 {% endblock %}
 
 {% block content %}
-    {% for message in get_flashed_messages(category_filter=["error"]) %}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <p> {{ message }}</p>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
-    {% for message in get_flashed_messages(category_filter=["info"]) %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <p> {{ message }}</p>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
-    {% for message in get_flashed_messages(category_filter=["warning"]) %}
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <p> {{ message }}</p>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
+    {% include 'flash_messages.html' %}
+    <h1>Settings</h1>
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updatePassword">
+        Update password
+    </button>
 
-    <form method="POST" action="{{ url_for('sign_up') }}" class=" needs-validation" novalidate>
-        <h1>Sign up</h1>
-        {{ form.csrf_token }}
-        <div class="form-field">
-            {{ form.first_name(class_="form-control") }}
-            {{ form.first_name.label(class_="form-label") }}
-            <div class="invalid-feedback">
-                Enter a valid name.
+    <!-- Modal -->
+    <div class="modal fade" id="updatePassword" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Update password</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" name="updatePassword" action="{{ url_for('settings') }}" class=" needs-validation" novalidate>
+                        {{ form.csrf_token }}
+                        <div class="form-field">
+                            {{ form.current_password(class_="form-control") }}
+                            {{ form.current_password.label(class_="form-label") }}
+                            <div class="invalid-feedback">
+                                Password must be at least 8 characters long.
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            {{ form.new_password(class_="form-control") }}
+                            {{ form.new_password.label(class_="form-label") }}
+                            <div class="invalid-feedback">
+                                Password must be at least 8 characters long.
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            {{ form.confirm_new_password(class_="form-control") }}
+                            {{ form.confirm_new_password.label(class_="form-label") }}
+                            <div class="invalid-feedback">
+                                Passwords must match.
+                            </div>
+                        </div>
+                        {{ form.update_password }}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
-        <div class="form-field">
-            {{ form.last_name(class_="form-control") }}
-            {{ form.last_name.label(class_="form-label") }}
-            <div class="invalid-feedback">
-                Enter a valid name.
+    </div>
+
+    <a class="btn btn-primary" href="{{ url_for('log_out') }}" role="button">Log out</a>
+
+    <h2>The danger zone...</h2>
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete_account_modal">
+        Delete my account
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="delete_account_modal" tabindex="-1" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title fs-5" id="exampleModalLabel">Are you sure?</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Deleting your account is irreversible, you will be logged out and lose all your data.
+                    There is no going back.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a class="btn btn-danger" href="{{ url_for('delete_account') }}" role="button">Yes, delete my
+                        account</a>
+                    {#                    <button type="button" class="btn btn-primary">Delete my account</button>#}
+                </div>
             </div>
         </div>
-        <div class="form-field">
-            {{ form.email(class_="form-control") }}
-            {{ form.email.label(class_="form-label") }}
-            <div class="invalid-feedback">
-                Enter a valid email.
-            </div>
-        </div>
-        <div class="form-field">
-            {{ form.password(class_="form-control") }}
-            {{ form.password.label(class_="form-label") }}
-            <div class="invalid-feedback">
-                Password must be at least 8 characters long.
-            </div>
-        </div>
-        <div class="form-field">
-            {{ form.confirm_password(class_="form-control") }}
-            {{ form.confirm_password.label(class_="form-label") }}
-            <div class="invalid-feedback">
-                Passwords must match.
-            </div>
-        </div>
-        {{ form.sign_up }}
-        <p>Already have an account? <a href="{{ url_for('log_in') }}">Log in</a>.</p>
-    </form>
+    </div>
+
 
 
 

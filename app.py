@@ -3,12 +3,20 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from database import mydb, cursor, create_user_query, search_user_with_email_query
-from forms import SignUpForm, LogInForm
+from database import mydb, cursor, create_user_query, search_user_with_email_query, search_user_with_id_query, \
+    update_password_with_id_query, delete_user_with_id
+from forms import SignUpForm, LogInForm, UpdatePassword
 
 # Set up Flask app
 app = Flask(__name__, static_folder='static', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('APPCONFIGSECRETKEY')
+
+
+def log_user_out():
+    session['loggedin'] = False
+    session.pop('id', None)
+    session.pop('first_name', None)
+    session.pop('last_name', None)
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -65,7 +73,7 @@ def log_in():
         cursor.execute(search_user_with_email_query, {'email': email})
         user = cursor.fetchone()
         print('User trying to log in ...')
-        print('Checked for users:', user)
+        # print('Checked for users:', user)
         if not user:
             flash(f"This email doesn't exist, please sign up.", category='warning')
             return redirect(url_for('sign_up'))
@@ -83,16 +91,43 @@ def log_in():
 
 @app.route('/log-out')
 def log_out():
-    session.pop('loggedin', None)
-    session.pop('id', None)
-    session.pop('first_name', None)
-    session.pop('last_name', None)
+    log_user_out()
     return redirect(url_for('index'))
 
 
-@app.route('/settings')
+@app.route('/settings', methods=['GET', 'POST'])
 def settings():
-    return "Settings panel"
+    if not session['loggedin']:
+        flash(f"Log in to access this page.", category='info')
+        return redirect(url_for('index'))
+    update_password_form = UpdatePassword()
+    if update_password_form.validate_on_submit():
+        user_id = session['id']
+        cursor.execute(search_user_with_id_query, {'id': user_id})
+        current_user = cursor.fetchone()
+        if not check_password_hash(pwhash=current_user['password'],
+                                   password=update_password_form.current_password.data):
+            flash(f"Looks like you entered the wrong password, please try again.", category='error')
+            return render_template('settings.html', form=update_password_form)
+        new_hashed_salted_password = generate_password_hash(
+            password=update_password_form.new_password.data,
+            method='pbkdf2:sha256',
+            salt_length=14)
+        cursor.execute(update_password_with_id_query, {'id': user_id, 'password': new_hashed_salted_password})
+        mydb.commit()
+        flash('Your password was changed successfully.', category='success')
+        return render_template('settings.html', form=update_password_form)
+    return render_template('settings.html', form=update_password_form)
+
+
+@app.route('/delete-account')
+def delete_account():
+    user_id = session['id']
+    cursor.execute(delete_user_with_id, {'id': user_id})
+    mydb.commit()
+    log_user_out()
+    flash(message='Your account was deleted successfully.', category='info')
+    return redirect(url_for('index'))
 
 
 @app.route('/reset-password')

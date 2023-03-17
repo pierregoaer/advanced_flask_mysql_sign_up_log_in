@@ -21,3 +21,20 @@ SELECT *
 FROM users
 WHERE email=%(email)s
 """
+
+search_user_with_id_query = """
+SELECT *
+FROM users
+WHERE id=%(id)s
+"""
+
+update_password_with_id_query = """
+UPDATE users
+SET password = %(password)s
+WHERE id = %(id)s
+"""
+
+delete_user_with_id = """
+DELETE FROM users
+WHERE id = %(id)s
+"""
