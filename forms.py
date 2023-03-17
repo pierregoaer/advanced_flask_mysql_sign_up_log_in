@@ -72,3 +72,19 @@ class UpdatePassword(FlaskForm):
         validators=[DataRequired(), EqualTo('new_password', message='Passwords must match.')]
     )
     update_password = SubmitField("Update password")
+
+
+class SetNewPasswordForm(FlaskForm):
+    password = PasswordField(
+        name='password',
+        label='Password',
+        render_kw={"placeholder": "password"},
+        validators=[DataRequired(message="Password must be at least 8 characters long."), Length(min=8)]
+    )
+    confirm_password = PasswordField(
+        name='confirm_password',
+        label='Confirm password',
+        render_kw={"placeholder": "confirm password"},
+        validators=[DataRequired(), EqualTo('password', message='Passwords must match.')]
+    )
+    set_new_password = SubmitField("Set new password")

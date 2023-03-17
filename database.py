@@ -2,6 +2,7 @@ import os
 import mysql.connector
 from mysql.connector import Error
 
+
 # Set up MySQL connection
 mydb = mysql.connector.connect(
     host=os.environ.get('MYSQLHOST'),
@@ -32,6 +33,14 @@ update_password_with_id_query = """
 UPDATE users
 SET password = %(password)s
 WHERE id = %(id)s
+"""
+
+update_confirm_email_query = """
+UPDATE users
+SET
+is_verified = 1,
+confirmed_on = %(date)s
+WHERE email = %(email)s;
 """
 
 delete_user_with_id = """
