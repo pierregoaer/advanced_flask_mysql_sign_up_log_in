@@ -8,7 +8,7 @@ from flask_mail import Message, Mail
 
 from database import mydb, cursor, create_user_query, search_user_with_email_query, search_user_with_id_query, \
     update_password_with_id_query, delete_user_with_id, update_confirm_email_query
-from forms import SignUpForm, LogInForm, UpdatePassword, SetNewPasswordForm
+from forms import SignUpForm, LogInForm, UpdatePassword, ResetPasswordForm, RequestPasswordResetForm
 
 # Set up Flask app and config
 app = Flask(__name__, static_folder='static', static_url_path='')
@@ -20,7 +20,6 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAILUSERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAILPASSWORD')
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
-
 
 # email validation
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
@@ -55,6 +54,20 @@ def send_verification_email(email):
     mail.send(msg)
 
 
+def send_password_reset_request_email(email):
+    token = generate_token(email)
+    password_reset_link = url_for('reset_password', token=token, _external=True)
+    msg = Message(
+        subject='Reset your password',
+        html=f"<p>We received a password reset request from your account.<p>"
+             f"<p>Click the link below to create a new password:</p>"
+             f"<p>{password_reset_link}</p>",
+        sender=('Sign-up and Log in', app.config['MAIL_USERNAME']),
+        recipients=[email]
+    )
+    mail.send(msg)
+
+
 def log_user_out():
     session.pop('loggedin', None)
     session.pop('id', None)
@@ -65,7 +78,6 @@ def log_user_out():
 
 @app.route('/', methods=["GET", "POST"])
 def index():
-    print(session)
     return render_template('index.html')
 
 
@@ -77,8 +89,6 @@ def sign_up():
         # check if user exists
         cursor.execute(search_user_with_email_query, {'email': email})
         check_for_user = cursor.fetchone()
-        print('User trying to sign up ...')
-        print('Checked for users:', check_for_user)
         if check_for_user:
             flash(f"This email already exists, please log in.", category='warning')
             return redirect(url_for('log_in'))
@@ -115,13 +125,12 @@ def sign_up():
 @app.route('/log-in', methods=["GET", "POST"])
 def log_in():
     log_in_form = LogInForm()
+    request_password_reset_form = RequestPasswordResetForm()
     if log_in_form.validate_on_submit():
         email = log_in_form.email.data
         # check if user exists
         cursor.execute(search_user_with_email_query, {'email': email})
         user = cursor.fetchone()
-        print('User trying to log in ...')
-        # print('Checked for users:', user)
         if not user:
             flash(f"This email doesn't exist, please sign up.", category='warning')
             return redirect(url_for('sign_up'))
@@ -129,7 +138,9 @@ def log_in():
             flash(f"Looks like you entered the wrong password, please try again.", category='error')
             return redirect(url_for('log_in'))
         if user['is_verified'] == 0:
-            flash(Markup(f'You haven\'t verified your email yet, click <a href="/resend-verification-email/{user["email"]}">here</a> to verify your email.'), category='info')
+            flash(Markup(
+                f'You haven\'t verified your email yet, click <a href="/resend-verification-email/{user["email"]}">here</a> to verify your email.'),
+                category='info')
             return redirect(url_for('log_in'))
         session['loggedin'] = True
         session['id'] = user['id']
@@ -138,7 +149,22 @@ def log_in():
         session['last_name'] = user['last_name']
         flash(f"Welcome back {user['first_name']}, you are now logged in.", category='info')
         return redirect(url_for('index'))
-    return render_template('log_in.html', form=log_in_form)
+    if request_password_reset_form.validate_on_submit():
+        email = request_password_reset_form.email.data
+        # check if user exists
+        cursor.execute(search_user_with_email_query, {'email': email})
+        user = cursor.fetchone()
+        if not user:
+            flash(f"This email doesn't exist, please sign up.", category='warning')
+            return redirect(url_for('sign_up'))
+        send_password_reset_request_email(email)
+        flash(f"Check your emails and follow the instruction to reset your password", category='info')
+        return redirect(url_for('log_in'))
+    return render_template(
+        'log_in.html',
+        log_in_form=log_in_form,
+        request_password_reset_form=request_password_reset_form
+    )
 
 
 @app.route('/log-out')
@@ -213,10 +239,52 @@ def resend_verification_email(email):
     return redirect(url_for('log_in'))
 
 
-@app.route('/set-new-password', methods=["GET", "POST"])
-def set_new_password():
-    set_new_password_form = SetNewPasswordForm()
-    return render_template('reset_password.html', form = set_new_password_form)
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    print('form loaded')
+    email = confirm_token(token)
+    cursor.execute(search_user_with_email_query, {'email': email})
+    user = cursor.fetchone()
+    if not user:
+        flash("Woops you're not allowed here, sign up or log in please.", category='warning')
+        return redirect(url_for('index'))
+    print('user found: ', user)
+    reset_password_form = ResetPasswordForm()
+    print(reset_password_form.errors)
+    if reset_password_form.validate_on_submit():
+        print(reset_password_form.errors)
+        print('form submitted')
+        new_hashed_salted_password = generate_password_hash(
+            password=reset_password_form.reset_password.data,
+            method='pbkdf2:sha256',
+            salt_length=14)
+        print(new_hashed_salted_password)
+        cursor.execute(update_password_with_id_query, {'id': user['id'], 'password': new_hashed_salted_password})
+        mydb.commit()
+        flash('Your password was changed successfully.', category='success')
+        return redirect(url_for('log_in'))
+    print('skipped validation')
+    return render_template('reset_password.html', form=reset_password_form, token=token)
+
+
+# @app.route('/process-reset-password/<token>', methods=['GET', 'POST'])
+# def process_reset_password(token):
+#     email = confirm_token(token)
+#     cursor.execute(search_user_with_email_query, {'email': email})
+#     user = cursor.fetchone()
+#     print('user found: ', user)
+#     if not user:
+#         flash("Woops you're not allowed here, sign up or log in please.", category='warning')
+#         return redirect(url_for('index'))
+#     new_hashed_salted_password = generate_password_hash(
+#         password=form.reset_password.data,
+#         method='pbkdf2:sha256',
+#         salt_length=14)
+#     print(new_hashed_salted_password)
+#     cursor.execute(update_password_with_id_query, {'id': user['id'], 'password': new_hashed_salted_password})
+#     mydb.commit()
+#     flash('Your password was changed successfully.', category='success')
+#     return redirect(url_for('log_in'))
 
 
 if __name__ == "__main__":

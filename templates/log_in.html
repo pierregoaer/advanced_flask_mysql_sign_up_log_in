@@ -7,28 +7,58 @@
 {% block content %}
     {% include 'flash_messages.html' %}
 
-    <form method="POST" action="{{ url_for('log_in') }}" class=" needs-validation" novalidate>
+    <form method="POST" name="log-in-form" action="{{ url_for('log_in') }}" class=" needs-validation" novalidate>
         <h1>Log in</h1>
-        {{ form.csrf_token }}
+        {{ log_in_form.csrf_token }}
         <div class="form-field">
-            {{ form.email(class_="form-control") }}
-            {{ form.email.label(class_="form-label") }}
+            {{ log_in_form.email(class_="form-control") }}
+            {{ log_in_form.email.label(class_="form-label") }}
             <div class="invalid-feedback">
                 Enter a valid email.
             </div>
         </div>
         <div class="form-field">
-            {{ form.password(class_="form-control") }}
-            {{ form.password.label(class_="form-label") }}
+            {{ log_in_form.password(class_="form-control") }}
+            {{ log_in_form.password.label(class_="form-label") }}
             <div class="invalid-feedback">
                 Password must be at least 8 characters long.
             </div>
         </div>
-        <a href="{{ url_for('reset_password') }}">Forgot your password? </a>
 
-        {{ form.log_in }}
-        <p>Don't have an account yet? <a href="{{ url_for('sign_up') }}">Sign up</a>.</p>
+
+        {{ log_in_form.log_in }}
     </form>
+    <button data-bs-toggle="modal" data-bs-target="#request-password-reset-modal">Forgot
+        your password? </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="request-password-reset-modal" tabindex="-1" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title fs-5" id="exampleModalLabel">What is your email?</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" name="request_password_reset_form"
+                          action="{{ url_for('log_in') }}" class=" needs-validation" novalidate>
+                        {{ request_password_reset_form.csrf_token }}
+                        <p>We'll email you with a link to reset your password.</p>
+                        <div class="form-field">
+                            {{ request_password_reset_form.email(class_="form-control") }}
+                            {{ request_password_reset_form.email.label(class_="form-label") }}
+                            <div class="invalid-feedback">
+                                Enter a valid email.
+                            </div>
+                        </div>
+                        {{ request_password_reset_form.send_request_password_reset }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p>Don't have an account yet? <a href="{{ url_for('sign_up') }}">Sign up</a>.</p>
 
 {% endblock %}
 
