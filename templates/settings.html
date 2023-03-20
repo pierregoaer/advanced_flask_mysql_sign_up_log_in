@@ -2,7 +2,6 @@
 
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/form_style.css') }}"/>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}"/>
 {% endblock %}
 
 {% block content %}
@@ -55,6 +54,7 @@
         </div>
     </div>
 
+    <a class="btn btn-primary" href="{{ url_for('set_up_2fa') }}" role="button">Set up 2 Factor Authentication</a>
     <a class="btn btn-primary" href="{{ url_for('log_out') }}" role="button">Log out</a>
 
     <h2>The danger zone...</h2>

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/form_style.css') }}"/>
+{% endblock %}
+
+{% block content %}
+    {% include 'flash_messages.html' %}
+    <h1>Set up 2 Factor Authentication</h1>
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updatePassword">
+        Set up 2FA
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="updatePassword" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Set up 2 Factor Authentication</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Scan this QR Code with your authenticator app (Google Authenticator, Authy, ...) and enter your one time code below.</p>
+{#                    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" />#}
+                    <img src="{{ qr_code_data }}" alt="QR Code" class="qr-code-image"/>
+                    <form method="POST" name="set_up_2fa" action="{{ url_for('set_up_2fa') }}" class=" needs-validation" novalidate>
+                        {{ form.csrf_token }}
+                        <div class="form-field">
+                            {{ form.totp_2fa(class_="form-control") }}
+                            {{ form.totp_2fa.label(class_="form-label") }}
+                            <div class="invalid-feedback">
+                                2FA code must be 6 digits
+                            </div>
+                        </div>
+                        {{ form.set_up_2fa }}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a class="btn btn-secondary" href="{{ url_for('settings') }}" role="button">Return to settings</a>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/form_validation.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+{% endblock %}

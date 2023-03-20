@@ -43,7 +43,16 @@ confirmed_on = %(date)s
 WHERE email = %(email)s;
 """
 
-delete_user_with_id = """
+delete_user_with_id_query = """
 DELETE FROM users
 WHERE id = %(id)s
+"""
+
+set_up_2fa_query = """
+UPDATE users
+SET
+2fa_on = 1,
+2fa_secret_key = %(hashed_2fa_secret_key)s,
+2_fa_last_verification = %(date)s
+WHERE id = %(user_id)s;
 """

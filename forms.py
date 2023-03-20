@@ -98,3 +98,12 @@ class RequestPasswordResetForm(FlaskForm):
         widget=EmailInput(),
         validators=[DataRequired(message="Your email is required."), Email()])
     send_request_password_reset = SubmitField("Send")
+
+
+class Setup2FA(FlaskForm):
+    totp_2fa = StringField(
+        name='totp_2fa',
+        label='2FA Code',
+        render_kw={"placeholder": "2fa code"},
+        validators=[DataRequired(message="Your first name is required."), Length(min=6, max=6, message="2FA code must be 6 digits")])
+    set_up_2fa = SubmitField("Validate")
