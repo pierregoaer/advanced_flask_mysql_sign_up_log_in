@@ -1,4 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+:root {
+  --primary: #0B5ED7;
+}
+
 
 body {
 	font-family: 'Poppins', sans-serif;
@@ -16,7 +20,7 @@ h1, h2 {
 
 h1 {
     color: #333333;
-    padding: 30px 0 10px 0;
+    padding: 20px 0 10px 0;
     font-size: 2rem;
 }
 
@@ -26,7 +30,7 @@ h1 {
     justify-content: space-between;
     align-items: center;
     padding: 5px 50px;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
 }
 
 .navbar-nav .nav-logo {
@@ -49,15 +53,121 @@ h1 {
     margin: 20px auto;
 }
 
-/*a, button {*/
-/*    !*width: fit-content;*!*/
-/*    padding: 5px 30px !important;*/
-/*    display: block !important;*/
-/*    margin: 0 auto;*/
-/*}*/
-
 .qr-code-image {
     display: block;
      width: 200px;
     margin: 0 auto;
+}
+
+/*Settings page*/
+.settings-action {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 60px;
+}
+
+.delete-account-btn {
+    display: block;
+    margin: 5px auto;
+}
+
+.forgot-password-btn {
+    border: none;
+    background-color: transparent;
+    color: var(--primary);
+    padding: 0;
+}
+
+/*Forms*/
+form {
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 15px;
+    padding: 30px 0;
+}
+
+form .form-field {
+    position: relative;
+    /*width: 100%;*/
+    /*flex: 1 0 100%;*/
+}
+
+form .form-field input,
+form .form-field textarea,
+form .form-field select {
+    border: 1px solid #b7b7b7;
+    padding: 13px 10px 10px 10px;
+    border-radius: 6px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+
+form .form-field input::placeholder,
+form .form-field textarea::placeholder {
+    color: white;
+}
+
+form .form-field select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: white;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    color: #5e5e5e;
+}
+
+form .form-field input:focus,
+form .form-field textarea:focus,
+form .form-field select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: none;
+}
+
+form .form-field label {
+    position: absolute;
+    left: 10px;
+    top: 12px;
+    background-color: white;
+    color: #b7b7b7;
+    font-size: 1rem;
+    padding: 1px 3px 1px 1px;
+    transition: all .2s ease-in-out;
+}
+
+form .form-field label:hover {
+    cursor: text;
+}
+
+form .form-field input:focus + label,
+form .form-field input:valid + label,
+form .form-field input:required:invalid:not(:placeholder-shown) + label,
+form .form-field select + label {
+    left: -5px;
+    top: -12px;
+    color: var(--primary);
+    font-size: .8rem;
+}
+
+form .form-field textarea:focus + label,
+form .form-field textarea:valid + label,
+form .form-field textarea:required:invalid:not(:placeholder-shown) + label {
+    left: -5px;
+    top: -12px;
+    color: var(--primary);
+    font-size: .8rem;
+}
+
+.form-message textarea {
+    height: 150px;
+}
+
+a {
+    text-decoration: none;
+    color: var(--primary);
 }

@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block head %}
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/form_style.css') }}"/>
 {% endblock %}
 
 {% block content %}
@@ -26,9 +25,9 @@
         </div>
 
 
-        {{ log_in_form.log_in }}
+        {{ log_in_form.log_in(class_="btn btn-primary") }}
     </form>
-    <button data-bs-toggle="modal" data-bs-target="#request-password-reset-modal">Forgot
+    <button data-bs-toggle="modal" class="forgot-password-btn" data-bs-target="#request-password-reset-modal">Forgot
         your password? </button>
 
     <!-- Modal -->
@@ -52,7 +51,7 @@
                                 Enter a valid email.
                             </div>
                         </div>
-                        {{ request_password_reset_form.send_request_password_reset }}
+                        {{ request_password_reset_form.send_request_password_reset(class_="btn btn-primary") }}
                     </form>
                 </div>
             </div>

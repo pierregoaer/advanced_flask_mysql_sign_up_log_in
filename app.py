@@ -2,6 +2,7 @@ import os
 import io
 import base64
 import time
+import hashlib
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, session, Markup, make_response
 from werkzeug.datastructures import MultiDict
@@ -12,8 +13,8 @@ import pyotp
 import qrcode
 
 from database import mydb, cursor, create_user_query, search_user_with_email_query, search_user_with_id_query, \
-    update_password_with_id_query, delete_user_with_id_query, update_confirm_email_query, set_up_2fa_query
-from forms import SignUpForm, LogInForm, UpdatePassword, ResetPasswordForm, RequestPasswordResetForm, Setup2FA
+    update_password_with_id_query, delete_user_with_id_query, update_confirm_email_query, set_up_2fa_query, remove_2fa_query
+from forms import SignUpForm, LogInForm, UpdatePassword, ResetPasswordForm, RequestPasswordResetForm, Setup2FA, Verify2FA
 
 # Set up Flask app and config
 app = Flask(__name__, static_folder='static', static_url_path='')
@@ -80,6 +81,9 @@ def log_user_out():
     session.pop('email', None)
     session.pop('first_name', None)
     session.pop('last_name', None)
+    session.pop('2fa_secret_key', None)
+    session.pop('2fa_enabled', None)
+    session.pop('2fa_verified', None)
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -89,10 +93,7 @@ def index():
 
 @app.route('/sign-up', methods=["GET", "POST"])
 def sign_up():
-    # tentative_email = session.get('tentative_email', None)
     sign_up_form = SignUpForm()
-    # if tentative_email:
-    #     sign_up_form.email(placeholder=tentative_email)
     if sign_up_form.validate_on_submit():
         email = sign_up_form.email.data
         # check if user exists
@@ -119,7 +120,6 @@ def sign_up():
         }
         cursor.execute(create_user_query, new_user)
         mydb.commit()
-        session.pop('tentative_email', None)
 
         # send email verification link
         send_verification_email(email)
@@ -134,21 +134,16 @@ def sign_up():
 
 @app.route('/log-in', methods=["GET", "POST"])
 def log_in():
-    # tentative_email = session.get('tentative_email', None)
     log_in_form = LogInForm()
-    # if tentative_email:
-    #     log_in_form.email(placeholder=tentative_email)
     if log_in_form.validate_on_submit():
         email = log_in_form.email.data
         # check if user exists
         cursor.execute(search_user_with_email_query, {'email': email})
         user = cursor.fetchone()
         if not user:
-            session['tentative_email'] = email
             flash(f"This email doesn't exist, please sign up.", category='warning')
             return redirect(url_for('sign_up'))
         if not check_password_hash(pwhash=user['password'], password=log_in_form.password.data):
-            session['tentative_email'] = email
             flash(f"Looks like you entered the wrong password, please try again.", category='error')
             return redirect(url_for('log_in'))
         if user['is_verified'] == 0:
@@ -156,14 +151,19 @@ def log_in():
                 f'You haven\'t verified your email yet, click <a href="/resend-verification-email/{user["email"]}">here</a> to verify your email.'),
                 category='info')
             return redirect(url_for('log_in'))
-        session['loggedin'] = True
         session['user_id'] = user['id']
         session['email'] = user['email']
         session['first_name'] = user['first_name']
         session['last_name'] = user['last_name']
-        session.pop('tentative_email', None)
-        flash(f"Welcome back {user['first_name']}, you are now logged in.", category='info')
-        return redirect(url_for('index'))
+        if user["2fa_on"] == 0:
+            session['loggedin'] = True
+            session['2fa_enabled'] = False
+            flash(f"Welcome back {user['first_name']}, you are now logged in.", category='info')
+            return redirect(url_for('index'))
+        else:
+            session['2fa_secret_key'] = user['2fa_secret_key']
+            session['2fa_enabled'] = True
+            return redirect(url_for('verify_2fa'))
     request_password_reset_form = RequestPasswordResetForm()
     if request_password_reset_form.validate_on_submit():
         email = request_password_reset_form.email.data
@@ -196,7 +196,7 @@ def settings():
         return redirect(url_for('index'))
     update_password_form = UpdatePassword()
     if update_password_form.validate_on_submit():
-        user_id = session['id']
+        user_id = session['user_id']
         cursor.execute(search_user_with_id_query, {'id': user_id})
         current_user = cursor.fetchone()
         if not check_password_hash(pwhash=current_user['password'],
@@ -230,21 +230,27 @@ def set_up_2fa():
         if totp_verification:
             print(totp_verification)
             print(session)
-            hashed_salted_secret_key = generate_password_hash(
-                password=secret_2fa_key,
-                method='pbkdf2:sha256',
-                salt_length=14)
+            # encoded_secret_2fa_key = base64.urlsafe_b64encode(secret_2fa_key.encode())
+            # hashed_salted_secret_key = hashlib.sha256(encoded_secret_2fa_key).hexdigest()
+            # hashed_salted_secret_key = generate_password_hash(
+            #     password=secret_2fa_key,
+            #     method='pbkdf2:sha256',
+            #     salt_length=14)
             data = {
-                'hashed_2fa_secret_key': hashed_salted_secret_key,
+                'hashed_2fa_secret_key': secret_2fa_key,
                 'date': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'user_id': session['user_id']
             }
             cursor.execute(set_up_2fa_query, data)
             mydb.commit()
+            session['2fa_enabled'] = True
+            flash("2FA was set up successfully.", category='success')
             return redirect(url_for('settings'))
         # if validated: save salted secret key to user database and update relevant database columns
         # if not validated, return to set up page and refresh page to generate new secret key
-        pass
+        else:
+            flash("Woops this code didn't work, please try again.", category='warning')
+            return render_template("set_up_2fa.html")
 
     # Generate a QR code image for the TOTP secret key
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
@@ -262,21 +268,45 @@ def set_up_2fa():
     return render_template('set_up_2fa.html', form=set_up_2fa_form, secret_2fa_key=secret_2fa_key, qr_code_data=qrcode_data)
 
 
-@app.route('/confirm-set-up-2fa', methods=['GET', 'POST'])
-def confirm_set_up_2fa():
-    secret_key = pyotp.random_base32()
-    hashed_salted_secret_key = generate_password_hash(
-        password=secret_key,
-        method='pbkdf2:sha256',
-        salt_length=14)
-    print(secret_key, hashed_salted_secret_key)
-    return secret_key
+@app.route('/verify-2fa', methods=['GET', 'POST'])
+def verify_2fa():
+    if '2fa_secret_key' not in session:
+        flash("Woops you're not allowed here, sign up or log in please.", category='warning')
+        return redirect(url_for('index'))
+    verify_2fa_form = Verify2FA()
+    if verify_2fa_form.validate_on_submit():
+        form_otp = verify_2fa_form.verify_totp_2fa.data
+        # encoded_secret_2fa_key = base64.urlsafe_b64encode(form_otp.encode())
+        # hashed_salted_form_otp = hashlib.sha256(encoded_secret_2fa_key).hexdigest()
+        # hashed_salted_form_otp = generate_password_hash(
+        #     password=form_otp,
+        #     method='pbkdf2:sha256',
+        #     salt_length=14)
+        user_2fa_secret_key = session['2fa_secret_key']
+        totp_verification = pyotp.TOTP(user_2fa_secret_key).verify(form_otp)
+        if totp_verification:
+            session['loggedin'] = True
+            flash("Successful log in", category='info')
+            return redirect(url_for('index'))
+        else:
+            flash("Woops this code didn't work, please try again.", category='warning')
+            return render_template("verify_2fa.html", verify_2fa_form=verify_2fa_form)
+
+    return render_template("verify_2fa.html", verify_2fa_form=verify_2fa_form)
+
+
+@app.route('/remove-2fa', methods=['GET', 'POST'])
+def remove_2fa():
+    cursor.execute(remove_2fa_query, {'user_id': session['user_id']})
+    mydb.commit()
+    session.pop('2fa_enabled', None)
+    flash("2-Factor Authentication was successfully removed.", category='info')
+    return redirect(url_for('settings'))
 
 
 @app.route('/delete-account')
 def delete_account():
-    user_id = session['id']
-    cursor.execute(delete_user_with_id_query, {'id': user_id})
+    cursor.execute(delete_user_with_id_query, {'user_id': session['user_id']})
     mydb.commit()
     log_user_out()
     flash(message='Your account was deleted successfully.', category='info')
@@ -345,4 +375,3 @@ def reset_password(token):
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)
 
-# TODO: add URL parameter to speed up entry: if wrong password, populate email field with last email entered

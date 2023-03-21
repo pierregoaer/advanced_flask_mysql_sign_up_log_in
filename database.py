@@ -45,7 +45,7 @@ WHERE email = %(email)s;
 
 delete_user_with_id_query = """
 DELETE FROM users
-WHERE id = %(id)s
+WHERE id = %(user_id)s
 """
 
 set_up_2fa_query = """
@@ -54,5 +54,14 @@ SET
 2fa_on = 1,
 2fa_secret_key = %(hashed_2fa_secret_key)s,
 2_fa_last_verification = %(date)s
+WHERE id = %(user_id)s;
+"""
+
+remove_2fa_query = """
+UPDATE users
+SET
+2fa_on = 0,
+2fa_secret_key = NULL,
+2_fa_last_verification = NULL
 WHERE id = %(user_id)s;
 """

@@ -1,65 +1,99 @@
 {% extends "base.html" %}
 
 {% block head %}
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/form_style.css') }}"/>
 {% endblock %}
 
 {% block content %}
     {% include 'flash_messages.html' %}
     <h1>Settings</h1>
-    <!-- Button trigger modal -->
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updatePassword">
-        Update password
-    </button>
+    <div class="settings-action">
 
-    <!-- Modal -->
-    <div class="modal fade" id="updatePassword" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Update password</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="POST" name="updatePassword" action="{{ url_for('settings') }}" class=" needs-validation" novalidate>
-                        {{ form.csrf_token }}
-                        <div class="form-field">
-                            {{ form.current_password(class_="form-control") }}
-                            {{ form.current_password.label(class_="form-label") }}
-                            <div class="invalid-feedback">
-                                Password must be at least 8 characters long.
+        <!-- Button trigger update password modal -->
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updatePassword">
+            Update password
+        </button>
+        <!-- Update password modal -->
+        <div class="modal fade" id="updatePassword" tabindex="-1" aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Update password</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" name="updatePassword" action="{{ url_for('settings') }}"
+                              class=" needs-validation" novalidate>
+                            {{ form.csrf_token }}
+                            <div class="form-field">
+                                {{ form.current_password(class_="form-control") }}
+                                {{ form.current_password.label(class_="form-label") }}
+                                <div class="invalid-feedback">
+                                    Password must be at least 8 characters long.
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-field">
-                            {{ form.new_password(class_="form-control") }}
-                            {{ form.new_password.label(class_="form-label") }}
-                            <div class="invalid-feedback">
-                                Password must be at least 8 characters long.
+                            <div class="form-field">
+                                {{ form.new_password(class_="form-control") }}
+                                {{ form.new_password.label(class_="form-label") }}
+                                <div class="invalid-feedback">
+                                    Password must be at least 8 characters long.
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-field">
-                            {{ form.confirm_new_password(class_="form-control") }}
-                            {{ form.confirm_new_password.label(class_="form-label") }}
-                            <div class="invalid-feedback">
-                                Passwords must match.
+                            <div class="form-field">
+                                {{ form.confirm_new_password(class_="form-control") }}
+                                {{ form.confirm_new_password.label(class_="form-label") }}
+                                <div class="invalid-feedback">
+                                    Passwords must match.
+                                </div>
                             </div>
-                        </div>
-                        {{ form.update_password }}
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            {{ form.update_password(class_="btn btn-primary") }}
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+        {% if not session['2fa_enabled'] %}
+            <a class="btn btn-primary" href="{{ url_for('set_up_2fa') }}" role="button">Set up 2-Factor
+                Authentication</a>
+        {% endif %}
+        {% if session['2fa_enabled'] %}
+            <!-- Button trigger remove 2famodal -->
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                Remove 2-Factor Authentication
+            </button>
 
-    <a class="btn btn-primary" href="{{ url_for('set_up_2fa') }}" role="button">Set up 2 Factor Authentication</a>
-    <a class="btn btn-primary" href="{{ url_for('log_out') }}" role="button">Log out</a>
+            <!-- Remove 2fa modal -->
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Remove 2-Factor Authentication?</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            For advanced security, we recommend keeping 2-Factor Authentication enabled. Are you sure
+                            you want to remove it?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <a class="btn btn-primary" href="{{ url_for('remove_2fa') }}" role="button">Remove 2FA</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        {% endif %}
+        <a class="btn btn-primary" href="{{ url_for('log_out') }}" role="button">Log out</a>
+    </div>
 
     <h2>The danger zone...</h2>
     <!-- Button trigger modal -->
-    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete_account_modal">
+    <button type="button" class="btn btn-danger delete-account-btn" data-bs-toggle="modal" data-bs-target="#delete_account_modal">
         Delete my account
     </button>
 

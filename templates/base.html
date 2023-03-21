@@ -22,7 +22,8 @@
         <div class="nav-controls">
             <div class="modal-btn">
                 <!-- Button trigger modal -->
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#app-explanation-modal">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#app-explanation-modal">
                     What is this app?
                 </button>
 
@@ -45,6 +46,10 @@
                                 for the front-end.<br><br>
                                 Some of the features implemented:
                                 <ul>
+                                    <li><strong>2-Factor Authentication</strong>: possibility to add 2FA via a random and dynamically generated QR code. Compatible with all 2FA apps like Google Authenticator, Authy, ...
+                                    </li>
+                                    <li><strong>Email verification</strong>: email with verification with secret token sent to user to confirm their email and activate their accounts.
+                                    </li>
                                     <li><strong>Password verification</strong>: type password twice when signing up to
                                         confirm
                                         passwords are matching
@@ -53,16 +58,12 @@
                                         database (the
                                         database is wiped clean every day as this is only a demo app)
                                     </li>
-                                    <li><strong>Password confirmation</strong>: email with verification link sent after
-                                        signing up
-                                        before the user can enter their account
-                                    </li>
                                     <li><strong>Password update</strong>: allows users to change their password in the
                                         settings
                                     </li>
                                     <li><strong>Password reset</strong>: users who forget their passwords can request a
                                         reset. They
-                                        receive a link to set a new password.
+                                        receive a link with a secret token to set a new password.
                                     </li>
                                 </ul>
 

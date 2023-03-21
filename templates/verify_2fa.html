@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+    {% include 'flash_messages.html' %}
+
+    <form method="POST" name="verify_2fa" action="{{ url_for('verify_2fa') }}" class=" needs-validation" novalidate>
+        <h1>Verify 2FA</h1>
+        <p>Enter your one time passcode:</p>
+        {{ verify_2fa_form.csrf_token }}
+        <div class="form-field">
+            {{ verify_2fa_form.verify_totp_2fa(class_="form-control") }}
+            {{ verify_2fa_form.verify_totp_2fa.label(class_="form-label") }}
+            <div class="invalid-feedback">
+                The code is required.
+            </div>
+        </div>
+
+
+        {{ verify_2fa_form.verify_2fa(class_="btn btn-primary") }}
+    </form>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/form_validation.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+{% endblock %}
